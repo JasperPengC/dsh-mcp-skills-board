@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "MCP & Skills",
+    "description": "Codex-style board for MCP servers and skills: search, status lights, per-row switches, details and an Add-server form laid out after Codex's mcp_servers fields."
+  }
+}

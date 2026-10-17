@@ -1,0 +1,6 @@
+# dsh-mcp-skills-board bundle patch: insert the board row.
+# The host half serves /mcp-skills/*; the browser half rides this same Loader
+# entry through the `dsh.client` declaration in package.json.
+- insert:
+    - id: mcp-skills
+      name: 'dsh-mcp-skills-board'

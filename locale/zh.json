@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "MCP 与技能",
+    "description": "Codex 风格的 MCP 服务器与技能管理面板：搜索、状态灯、逐行开关、详情，以及按 Codex mcp_servers 字段设计的添加服务器表单。"
+  }
+}

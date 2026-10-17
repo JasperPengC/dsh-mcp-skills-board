@@ -1,0 +1,67 @@
+{
+  "name": "dsh-mcp-skills-board",
+  "version": "0.1.0",
+  "description": "Codex-style MCP & Skills board for DeepSeek Harness: a sidebar panel plus a Plugins-page bundle section, with search, status lights, per-row switches and an Add-server form.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./locale/en.json": "./locale/en.json",
+    "./locale/zh.json": "./locale/zh.json",
+    "./icon": "./assets/icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "assets",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "icon": "./assets/icon.svg",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "mcp",
+    "skills",
+    "mcp-manager",
+    "skill-manager",
+    "mcp-server",
+    "codex"
+  ],
+  "license": "MIT",
+  "author": "GlowStorm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Storm-Starlight/dsh-mcp-skills-board.git"
+  },
+  "homepage": "https://github.com/Storm-Starlight/dsh-mcp-skills-board#readme",
+  "bugs": {
+    "url": "https://github.com/Storm-Starlight/dsh-mcp-skills-board/issues"
+  },
+  "engines": {
+    "node": ">=22.19"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.2.0-rc.2 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "test": "node test/host.test.mjs && node test/presets.test.mjs"
+  }
+}

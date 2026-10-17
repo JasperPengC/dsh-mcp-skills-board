@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
+  <defs>
+    <linearGradient id="adoc" x1="18" y1="6.5" x2="18" y2="29.5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#69B9FF"/>
+      <stop offset="1" stop-color="#324DE2"/>
+    </linearGradient>
+    <linearGradient id="aspark" x1="27.5" y1="22" x2="27.5" y2="33" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E6ECFF"/>
+      <stop offset="1" stop-color="#A797FC"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="6.5" width="20" height="23" rx="4" fill="url(#adoc)"/>
+  <path d="M12.5 14.5H23.5M12.5 19.5H20" stroke="#FFFFFF" stroke-opacity="0.78" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M27.6 21.5C28.25 24.4 29.85 26 32.75 26.65C29.85 27.3 28.25 28.9 27.6 31.8C26.95 28.9 25.35 27.3 22.45 26.65C25.35 26 26.95 24.4 27.6 21.5Z" fill="url(#aspark)"/>
+</svg>
