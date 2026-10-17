@@ -126,6 +126,10 @@ npm test
 
 覆盖 state 和 action 路由、服务器增删改、启停、技能策略写入、认证栅栏。
 
+## 社区
+
+本项目在 [LINUX DO](https://linux.do) 社区推广。
+
 ## 许可证
 
 MIT。侧栏图标复用了 `@deepseek-ai/dsh-client-ui-primitives`（MIT）中 `IconSkillOutlineRegular` 的路径数据，以便和 DSH 自身的图标粗细一致。

@@ -127,6 +127,10 @@ npm test
 
 Covers the state and action routes, server add, edit and remove, enable and disable, skill policy writes, and the auth fence.
 
+## Community
+
+Promoted in the [LINUX DO](https://linux.do) community.
+
 ## License
 
 MIT. The sidebar glyph reuses the path data of `IconSkillOutlineRegular` from
