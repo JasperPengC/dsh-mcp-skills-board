@@ -1,6 +1,6 @@
 {
   "name": "dsh-mcp-skills-board",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Codex-style MCP & Skills board for DeepSeek Harness: a sidebar panel plus a Plugins-page bundle section, with search, status lights, per-row switches and an Add-server form.",
   "type": "module",
   "main": "lib/index.js",
@@ -23,7 +23,8 @@
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "icon": "./assets/icon.svg",
   "keywords": [
@@ -41,11 +42,11 @@
   "author": "GlowStorm",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Storm-Starlight/dsh-mcp-skills-board.git"
+    "url": "git+https://github.com/JasperPengC/dsh-mcp-skills-board.git"
   },
-  "homepage": "https://github.com/Storm-Starlight/dsh-mcp-skills-board#readme",
+  "homepage": "https://github.com/JasperPengC/dsh-mcp-skills-board#readme",
   "bugs": {
-    "url": "https://github.com/Storm-Starlight/dsh-mcp-skills-board/issues"
+    "url": "https://github.com/JasperPengC/dsh-mcp-skills-board/issues"
   },
   "engines": {
     "node": ">=22.19"
