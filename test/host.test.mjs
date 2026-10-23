@@ -34,7 +34,7 @@ async function call(method, path, body) {
     async *[Symbol.asyncIterator]() { if (body !== undefined) yield Buffer.from(JSON.stringify(body)) },
   }
   const res = { statusCode: 0, headers: {}, payload: '', setHeader(k, v) { this.headers[k] = v }, end(payload) { this.payload = payload ?? '' } }
-  const route = routes.find(candidate => candidate.path === path)
+  const route = routes.find(candidate => candidate.path === path.split('?')[0])
   assert.ok(route, `route not registered: ${path}`)
   await route.handler(req, res)
   return { status: res.statusCode, json: res.payload ? JSON.parse(res.payload) : null }
@@ -136,5 +136,90 @@ result = await call('GET', '/mcp-skills/state')
 assert.equal(result.status, 401)
 rejection = undefined
 console.log('9 auth fence ok')
+
+// 10. skill create
+result = await call('GET', '/mcp-skills/state')
+assert.ok(Array.isArray(result.json.roots))
+assert.equal(result.json.roots.find(root => root.id === 'user-dsh').writable, true)
+result = await call('POST', '/mcp-skills/action', {
+  action: 'skill-create',
+  root: 'user-dsh',
+  name: 'release-helper',
+  description: '帮助整理发布说明',
+  whenToUse: '准备发版时',
+  body: '# 发布说明\n\n按提交记录整理。',
+  model: true,
+  user: true,
+})
+assert.equal(result.status, 200, JSON.stringify(result.json))
+const createdPath = join(home, 'skills', 'release-helper', 'SKILL.md')
+const created = await readFile(createdPath, 'utf8')
+assert.match(created, /^---\nname: release-helper\n/)
+assert.match(created, /description: 帮助整理发布说明/)
+assert.match(created, /whenToUse: 准备发版时/)
+assert.match(created, /# 发布说明/)
+assert.equal(result.json.skills.length, 2)
+console.log('10 skill create ok')
+
+// 11. skill read + save (unknown frontmatter keys are preserved)
+await writeFile(createdPath, created.replace('---\n\n', 'license: MIT\n---\n\n'))
+result = await call('POST', '/mcp-skills/action', { action: 'skill-read', id: createdPath })
+assert.equal(result.status, 200, JSON.stringify(result.json))
+assert.equal(result.json.skill.name, 'release-helper')
+assert.match(result.json.skill.body, /# 发布说明/)
+result = await call('POST', '/mcp-skills/action', {
+  action: 'skill-save',
+  id: createdPath,
+  description: '更新后的描述',
+  whenToUse: '',
+  body: '新的正文',
+  model: false,
+  user: true,
+})
+assert.equal(result.status, 200, JSON.stringify(result.json))
+const saved = await readFile(createdPath, 'utf8')
+assert.match(saved, /description: 更新后的描述/)
+assert.match(saved, /disable-model-invocation: true/)
+assert.match(saved, /license: MIT/)
+assert.match(saved, /新的正文/)
+assert.doesNotMatch(saved, /whenToUse:/)
+
+// 12. invalid skill name is refused
+result = await call('POST', '/mcp-skills/action', { action: 'skill-create', root: 'user-dsh', name: 'Bad Name', description: 'x', model: true, user: true })
+assert.equal(result.status, 409)
+console.log('11-12 skill read/save/validation ok')
+
+// 13. folder browse route
+await mkdir(join(home, 'browse-dir', 'sub'), { recursive: true })
+result = await call('GET', `/mcp-skills/browse?path=${encodeURIComponent(join(home, 'browse-dir'))}`)
+assert.equal(result.status, 200, JSON.stringify(result.json))
+assert.equal(result.json.path, join(home, 'browse-dir'))
+assert.ok(result.json.entries.some(entry => entry.name === 'sub' && entry.path === join(home, 'browse-dir', 'sub')))
+assert.ok(Array.isArray(result.json.roots) && result.json.roots.length > 0)
+console.log('13 browse ok')
+
+// 14. create a skill inside a chosen subfolder of a writable root
+await mkdir(join(home, 'skills', 'team'), { recursive: true })
+result = await call('POST', '/mcp-skills/action', {
+  action: 'skill-create',
+  rootPath: join(home, 'skills', 'team'),
+  name: 'browse-made',
+  description: '在子目录里创建',
+  model: true,
+  user: true,
+})
+assert.equal(result.status, 200, JSON.stringify(result.json))
+assert.ok((await stat(join(home, 'skills', 'team', 'browse-made', 'SKILL.md'))).isFile())
+
+result = await call('POST', '/mcp-skills/action', {
+  action: 'skill-create',
+  rootPath: join(home, 'outside'),
+  name: 'nope',
+  description: 'x',
+  model: true,
+  user: true,
+})
+assert.equal(result.status, 409)
+console.log('14 chosen-folder create ok')
 
 console.log('\nALL HOST TESTS PASSED')
