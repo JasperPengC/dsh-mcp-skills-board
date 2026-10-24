@@ -22,8 +22,11 @@ One sidebar entry and one plugin-page config section. Inspect and toggle MCP ser
 | Area | Capability |
 | --- | --- |
 | MCP servers | Lists every composed `@deepseek-ai/dsh-mcp-client` row with a status light, tool count and tool names; one toggle per row; add, edit and remove stdio or streamable-http servers |
-| Skills | Scans `.dsh/skills`, `.agents/skills` and custom roots, groups rows by source root with the current project pinned; each skill switches between enabled / manual-only / model-only / off |
+| Skills | Scans `.dsh/skills`, `.agents/skills` and custom roots, groups rows by source root with the current project pinned; each skill switches between enabled / manual-only / model-only / off, and can be renamed/moved, duplicated or deleted |
 | Create and edit | A form for name, description, when-to-use and body, with invocation switches and a folder picker for the target root |
+| Import / export | Reads Codex `config.toml`, Claude/Cursor `mcpServers` JSON, or this plugin's own JSON export; export can be copied or downloaded |
+| Templates | One-click templates for filesystem, github, fetch, git, sqlite and brave-search in the add-server form |
+| Secrets | env and header values accept `@env:NAME`, which renders `!!js process.env.NAME` so the secret is not stored in the patch file |
 | Preset skills | Skills provided by agent presets are listed read-only because they live inside the installed bundle |
 | Safety | Only the managed config block and files inside skill roots are rewritten; removing a server applies to servers added here and asks for confirmation |
 
@@ -37,7 +40,7 @@ One sidebar entry and one plugin-page config section. Inspect and toggle MCP ser
 
 ![Skill details](assets/screenshot-skill-detail.png)
 
-Every control is hand-built: buttons, inputs, selects, switches, dialogs and toasts follow the active DSH theme instead of native widget styling. Dialogs size themselves to their content and do not scroll in normal use; text areas grow with their content and scroll only when the content exceeds the field.
+Every control is hand-built: buttons, inputs, selects, switches, dialogs and toasts follow the active DSH theme instead of native widget styling. Dialogs size themselves to their content and do not scroll in normal use; text areas grow with their content and scroll only when the content exceeds the field. Press `/` to focus the search box.
 
 ## Install
 
@@ -106,7 +109,7 @@ Saving rewrites only the managed frontmatter keys (name, description, when-to-us
 ## Limits
 
 - No OAuth: servers that require it are rejected by DSH's MCP bridge and the error appears in the row details;
-- Secrets are plain text in `cordis.patch.yml` (0600). To avoid that, leave the value empty, export it in your shell and hand-edit the row to `!!js process.env.X`; the page then treats it as an external row and only toggles it;
+- Secrets are plain text in `cordis.patch.yml` (0600) by default. Writing a value as `@env:NAME` renders `!!js process.env.NAME` instead, keeping the secret in the environment;
 - Preset skills are read-only;
 - Profiles without `patchReload: live` apply MCP changes on the next launch; the page says so;
 - Removal only applies to servers added from this page.
