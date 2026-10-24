@@ -13,13 +13,14 @@ await writeFile(patchPath, '# user comment before\n- insert:\n    - id: keep-me\
 
 const routes = []
 let rejection
+let loaderEntries = []
 const ctx = {
   inject(services, cb) { cb({ effect(fn) { fn(); return () => {} }, webServer: { register(def) { routes.push(def); return () => {} } } }) },
   effect(fn) { fn(); return () => {} },
   get(name) {
     if (name === 'connection') return { requestRejection: () => rejection }
     if (name === 'tools') return { schemas: () => [] }
-    if (name === 'loader') return { entries: () => [] }
+    if (name === 'loader') return { entries: () => loaderEntries }
     return undefined
   },
 }
@@ -221,5 +222,108 @@ result = await call('POST', '/mcp-skills/action', {
 })
 assert.equal(result.status, 409)
 console.log('14 chosen-folder create ok')
+
+
+// 15. @env references stay out of the patch file
+result = await call('POST', '/mcp-skills/action', {
+  action: 'mcp-save',
+  server: { name: 'envref', transport: 'stdio', enabled: true, command: 'npx', args: [], env: { TOKEN: '@env:GITHUB_TOKEN' }, cwd: '', url: '', headers: {}, toolCallTimeoutMs: 60000 },
+})
+assert.equal(result.status, 200, JSON.stringify(result.json))
+patch = await readFile(patchPath, 'utf8')
+assert.match(patch, /"TOKEN": !!js process\.env\.GITHUB_TOKEN/)
+assert.doesNotMatch(patch, /"@env:/)
+console.log('15 env reference ok')
+
+// 16. JSON import (Claude/Cursor shape) + duplicate skip
+result = await call('POST', '/mcp-skills/action', {
+  action: 'mcp-import',
+  text: JSON.stringify({ mcpServers: {
+    imported_stdio: { command: 'npx', args: ['-y', 'pkg'], env: { A: '1' } },
+    imported_http: { url: 'https://example.com/mcp', headers: { Authorization: 'Bearer t' } },
+  } }),
+})
+assert.equal(result.status, 200, JSON.stringify(result.json))
+assert.deepEqual(result.json.importResult.added.sort(), ['imported_http', 'imported_stdio'])
+assert.equal(result.json.importResult.skipped.length, 0)
+result = await call('POST', '/mcp-skills/action', {
+  action: 'mcp-import',
+  text: JSON.stringify({ mcpServers: { imported_stdio: { command: 'npx' } } }),
+})
+assert.equal(result.json.importResult.added.length, 0)
+assert.equal(result.json.importResult.skipped[0].reason, 'name already in use')
+console.log('16 json import ok')
+
+// 17. Codex TOML import
+const codexToml = `
+[mcp_servers.codex_demo]
+command = "npx"
+args = ["-y", "@example/server"]
+env = { DEMO = "1" }
+enabled = false
+tool_timeout_sec = 45
+
+[mcp_servers.codex_http]
+url = "https://example.com/mcp"
+http_headers = { Authorization = "Bearer t" }
+`
+result = await call('POST', '/mcp-skills/action', { action: 'mcp-import', text: codexToml })
+assert.equal(result.status, 200, JSON.stringify(result.json))
+assert.deepEqual(result.json.importResult.added.sort(), ['codex_demo', 'codex_http'])
+patch = await readFile(patchPath, 'utf8')
+assert.match(patch, /transport: "streamable-http"/)
+assert.match(patch, /toolCallTimeoutMs: 45000/)
+console.log('17 codex toml import ok')
+
+// 18. export snapshot
+result = await call('POST', '/mcp-skills/action', { action: 'mcp-export' })
+assert.equal(result.status, 200)
+assert.equal(result.json.export.format, 'dsh-mcp-skills-board')
+const exported = result.json.export.servers.find(server => server.name === 'envref')
+assert.ok(exported, 'export includes envref')
+assert.equal(exported.env.TOKEN, '@env:GITHUB_TOKEN')
+console.log('18 export ok')
+
+// 19. skill rename / duplicate / delete
+await mkdir(join(home, 'skills', 'ops-skill'), { recursive: true })
+const opsFile = join(home, 'skills', 'ops-skill', 'SKILL.md')
+await writeFile(opsFile, '---\nname: ops-skill\ndescription: ops\nlicense: MIT\n---\nBody\n')
+result = await call('POST', '/mcp-skills/action', { action: 'skill-rename', id: opsFile, name: 'ops-renamed' })
+assert.equal(result.status, 200, JSON.stringify(result.json))
+const renamed = join(home, 'skills', 'ops-renamed', 'SKILL.md')
+assert.ok((await stat(renamed)).isFile())
+const renamedText = await readFile(renamed, 'utf8')
+assert.match(renamedText, /^---\nname: ops-renamed\n/)
+assert.match(renamedText, /license: MIT/)
+
+result = await call('POST', '/mcp-skills/action', { action: 'skill-duplicate', id: renamed, name: 'ops-copy' })
+assert.equal(result.status, 200, JSON.stringify(result.json))
+const copied = join(home, 'skills', 'ops-copy', 'SKILL.md')
+assert.match(await readFile(copied, 'utf8'), /name: ops-copy/)
+
+result = await call('POST', '/mcp-skills/action', { action: 'skill-delete', id: copied })
+assert.equal(result.status, 200, JSON.stringify(result.json))
+let gone = false
+try { await stat(copied) } catch { gone = true }
+assert.ok(gone, 'deleted file is gone')
+console.log('19 skill rename/copy/delete ok')
+
+// 20. composed managed row reports the sidecar source text, not the evaluated config
+loaderEntries = [{
+  id: 'tree-envref',
+  options: {
+    id: 'mcp-envref',
+    name: '@deepseek-ai/dsh-mcp-client',
+    config: { serverName: 'envref', transport: 'stdio', command: 'npx', args: [], env: { TOKEN: { expression: 'process.env.GITHUB_TOKEN' } }, toolCallTimeoutMs: 60000 },
+  },
+  disabled: false,
+}]
+result = await call('GET', '/mcp-skills/state')
+const envrefRow = result.json.mcp.find(row => row.serverName === 'envref')
+assert.ok(envrefRow, 'composed managed row is present')
+assert.equal(envrefRow.managed, true)
+assert.equal(envrefRow.config.env.TOKEN, '@env:GITHUB_TOKEN', 'sidecar value wins over the evaluated config')
+loaderEntries = []
+console.log('20 composed row keeps sidecar values ok')
 
 console.log('\nALL HOST TESTS PASSED')
