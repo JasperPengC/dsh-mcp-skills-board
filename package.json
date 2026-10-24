@@ -1,6 +1,6 @@
 {
   "name": "dsh-mcp-skills-board",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Codex-style MCP & Skills board for DeepSeek Harness: a sidebar panel plus a Plugins-page bundle section, with search, status lights, per-row switches and an Add-server form.",
   "type": "module",
   "main": "lib/index.js",
